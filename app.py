@@ -3,7 +3,7 @@ import calendar
 from datetime import datetime, timedelta
 
 # Page Setup
-st.set_page_config(page_title="Nairobi Pipe Builder v5.3", layout="wide")
+st.set_page_config(page_title="Nairobi Pipe Builder v5.4", layout="wide")
 
 # --- DATA ---
 LOCATIONS = ["Any", "JVJ", "AGW", "Mbingu", "KEN", "Sig", "KICC", "Train", "Adams", "Comet", "Sarit", "Nyayo"]
@@ -11,6 +11,7 @@ DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 NTHS = ["1st", "2nd", "3rd", "4th", "5th"]
 WEEKS = ["W1", "W2", "W3", "W4", "W5"]
 SHIFTS = ["EM", "M", "A", "E"]
+ALTS = {"Alternating Odd Weeks": "Alt1", "Alternating Even Weeks": "Alt2"}
 
 def get_scheduling_weeks(year):
     options = []
@@ -27,7 +28,7 @@ def get_scheduling_weeks(year):
             options.append(f"{month_name} {year} - W{w}")
     return options
 
-st.title("Nairobi Pipe Code Builder v5.3")
+st.title("Nairobi Pipe Code Builder v5.4")
 
 # --- UI LAYOUT ---
 col_left, col_right = st.columns([2, 1])
@@ -45,64 +46,64 @@ with col_left:
     sel_days = [day for i, day in enumerate(DAYS) if day_cols[i].checkbox(day)]
 
     st.subheader("3. Timing Method")
-    # SWAPPED: Scheduling Week is now Method A
     method = st.radio("Pick ONE Method:", 
-                      ["Method A: Scheduling Week (W1...)", "Method B: Calendar Occurrence (1st Wed...)"], 
+                      ["Method A: Scheduling Week (W1...)", 
+                       "Method B: Calendar Occurrence (1st Wed...)",
+                       "Method C: Alternating Weeks (Odd/Even)"], 
                       horizontal=True)
     
-    sel_nths, sel_weeks = [], []
-    if "Scheduling Week" in method:
+    sel_nths, sel_weeks, sel_alt = [], [], None
+    
+    if "Method A" in method:
         wk_cols = st.columns(5)
         sel_weeks = [w for i, w in enumerate(WEEKS) if wk_cols[i].checkbox(w)]
-    else:
+    elif "Method B" in method:
         nth_cols = st.columns(5)
         sel_nths = [n for i, n in enumerate(NTHS) if nth_cols[i].checkbox(n)]
+    else:
+        # Method C
+        alt_choice = st.selectbox("Select Cycle:", ["None", "Alternating Odd Weeks", "Alternating Even Weeks"])
+        if alt_choice != "None":
+            sel_alt = ALTS[alt_choice]
 
     st.subheader("4. Shifts")
     shift_cols = st.columns(4)
     sel_shifts = [s for i, s in enumerate(SHIFTS) if shift_cols[i].checkbox(s)]
 
 # --- INITIALIZE VARIABLES ---
-loc_val = "Any"
-day_val = "Any"
-week_val = "Any"
-shift_val = "Any"
+loc_val, day_val, week_val, shift_val = "Any", "Any", "Any", "Any"
 day_elements = []
 
 # --- LOGIC ENGINE ---
-# 1. Locations
-if sel_locs:
-    loc_val = ", ".join(sel_locs)
+if sel_locs: loc_val = ", ".join(sel_locs)
 
-# 2. Timing
-if "Scheduling Week" in method:
-    # Method A
+if "Method A" in method:
     if sel_days: day_val = ", ".join(sel_days)
     if sel_weeks: week_val = ", ".join(sel_weeks)
-else:
-    # Method B (Calendar Occurrence)
+elif "Method B" in method:
     if sel_nths and sel_days:
         for n in sel_nths:
-            for d in sel_days:
-                day_elements.append(f"{n[0]}{d}")
+            for d in sel_days: day_elements.append(f"{n[0]}{d}")
         day_val = ", ".join(day_elements)
-    elif sel_days:
-        day_val = ", ".join(sel_days)
+    elif sel_days: day_val = ", ".join(sel_days)
+else:
+    # Method C
+    if sel_days: day_val = ", ".join(sel_days)
+    if sel_alt: week_val = sel_alt
 
-# 3. Shifts
-if sel_shifts:
-    shift_val = ", ".join(sel_shifts)
+if sel_shifts: shift_val = ", ".join(sel_shifts)
 
 # --- STRING ASSEMBLY ---
-# New Format: Label: Selection | Label: Selection...
-final_code = (f"Location: {loc_val} | "
-              f"Day: {day_val} | "
-              f"Week: {week_val} | "
-              f"Shift: {shift_val}")
+final_code = f"Location: {loc_val} | Day: {day_val} | Week: {week_val} | Shift: {shift_val}"
 
 st.divider()
 st.subheader("Generated Pipe Code")
 st.code(final_code, language="text")
+
+# 1) RESET BUTTON
+if st.button("Reset All Form Fields"):
+    st.cache_data.clear()
+    st.rerun()
 
 # --- PREVIEW PANEL ---
 with col_right:
@@ -111,9 +112,7 @@ with col_right:
     selected_week_str = st.selectbox("Select Week to Preview", week_options)
     
     p = selected_week_str.split(" ")
-    sel_month_name = p[0]
-    sel_week_num = p[-1]
-    
+    sel_month_name, sel_week_num = p[0], p[-1]
     m_idx = list(calendar.month_name).index(sel_month_name)
     f_day = datetime(2026, m_idx, 1)
     f_mon = f_day + timedelta(days=(7 - f_day.weekday()) % 7)
@@ -129,20 +128,23 @@ with col_right:
     for i in range(7):
         curr = start_dt + timedelta(days=i)
         d_name = DAYS[curr.weekday()]
-        nth_v = (curr.day - 1) // 7 + 1
-        nth_s = f"{nth_v}{NTHS[nth_v-1][1:]}"
+        nth_s = f"{(curr.day - 1) // 7 + 1}{NTHS[(curr.day - 1) // 7][1:]}"
+        iso_wk = curr.isocalendar()[1]
         
         is_match = False
-        # Preview matching adjusted for new Method names
-        if "Calendar" in method and sel_nths and sel_days:
+        if "Method B" in method and sel_nths and sel_days:
             if d_name in sel_days and nth_s in sel_nths: is_match = True
-        elif "Scheduling" in method and sel_weeks and sel_days:
+        elif "Method A" in method and sel_weeks and sel_days:
             if d_name in sel_days and sel_week_num in sel_weeks: is_match = True
-        elif sel_days and not sel_nths and not sel_weeks:
+        elif "Method C" in method and sel_alt and sel_days:
+            is_odd = iso_wk % 2 != 0
+            if d_name in sel_days:
+                if (sel_alt == "Alt1" and is_odd) or (sel_alt == "Alt2" and not is_odd):
+                    is_match = True
+        elif sel_days and not (sel_nths or sel_weeks or sel_alt):
             if d_name in sel_days: is_match = True
 
-        if is_match:
-            matches.append(curr.strftime('%a, %b %d'))
+        if is_match: matches.append(curr.strftime('%a, %b %d'))
 
     if matches:
         st.write("Volunteer is **ACTIVE** on:")

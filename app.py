@@ -32,7 +32,7 @@ def get_scheduling_weeks(year):
             options.append(f"{month_name} {year} - W{w}")
     return options
 
-st.title("🇰🇪 Nairobi Pipe Code Builder v5.1")
+st.title("Nairobi Pipe Code Builder v5.1")
 
 # --- LAYOUT ---
 col_left, col_right = st.columns([2, 1])

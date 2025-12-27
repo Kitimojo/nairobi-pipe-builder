@@ -66,20 +66,26 @@ with col_left:
 
 # --- LOGIC ---
 time_elements = []
+
+# Scenario 1: Method A (Nth + Day) - e.g., "1Wed"
 if sel_nths and sel_days:
     for n in sel_nths:
-        for d in sel_days: time_elements.append(f"{n[0]}{d}")
+        for d in sel_days:
+            time_elements.append(f"{n[0]}{d}")
+
+# Scenario 2: Method B (W-Weeks) - e.g., "W1"
 elif sel_weeks:
+    # If weeks are chosen, they take priority as the time element
     time_elements = sel_weeks
+
+# Scenario 3: Only Days (Weekly) - e.g., "Mon, Wed"
 elif sel_days:
+    # If no Nth or Week is chosen, just use the days themselves
     time_elements = sel_days
 
+# Build the final pipe string
 parts = [p for p in [", ".join(sel_locs), ", ".join(time_elements), ", ".join(sel_shifts)] if p]
 final_code = " | ".join(parts) if parts else "Select options..."
-
-st.divider()
-st.subheader("Generated Pipe Code")
-st.code(final_code, language="text")
 
 # --- PREVIEW PANEL ---
 with col_right:

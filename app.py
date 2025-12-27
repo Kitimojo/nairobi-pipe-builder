@@ -67,25 +67,37 @@ with col_left:
 # --- LOGIC ---
 time_elements = []
 
-# Scenario 1: Method A (Nth + Day) - e.g., "1Wed"
+# Scenario 1: Method A (Nth + Day) - e.g., "1Wed, 3Wed"
 if sel_nths and sel_days:
     for n in sel_nths:
         for d in sel_days:
             time_elements.append(f"{n[0]}{d}")
 
-# Scenario 2: Method B (W-Weeks) - e.g., "W1"
+# Scenario 2: Method B (W-Weeks) - e.g., "W1, W2"
 elif sel_weeks:
-    # If weeks are chosen, they take priority as the time element
     time_elements = sel_weeks
 
-# Scenario 3: Only Days (Weekly) - e.g., "Mon, Wed"
+# Scenario 3: Regular Weekdays (If no Method A or B is active) - e.g., "Wed"
 elif sel_days:
-    # If no Nth or Week is chosen, just use the days themselves
     time_elements = sel_days
 
-# Build the final pipe string
-parts = [p for p in [", ".join(sel_locs), ", ".join(time_elements), ", ".join(sel_shifts)] if p]
-final_code = " | ".join(parts) if parts else "Select options..."
+# --- STRING ASSEMBLY ---
+# We use list comprehension to ensure we only join items that actually have content
+loc_string = ", ".join(sel_locs)
+time_string = ", ".join(time_elements)
+shift_string = ", ".join(sel_shifts)
+
+# Combine only the non-empty parts with the pipe "|" separator
+parts = [p for p in [loc_string, time_string, shift_string] if p.strip()]
+
+if parts:
+    final_code = " | ".join(parts)
+else:
+    final_code = "Select options to generate code..."
+
+st.divider()
+st.subheader("Generated Pipe Code")
+st.code(final_code, language="text")
 
 # --- PREVIEW PANEL ---
 with col_right:

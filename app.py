@@ -65,43 +65,42 @@ with col_left:
     sel_shifts = [s for i, s in enumerate(SHIFTS) if shift_cols[i].checkbox(s)]
 
 # --- LOGIC ---
-time_elements = []
+day_elements = []
+week_elements = []
 
 # Scenario 1: Method A (Nth + Day) - e.g., "1Wed, 3Wed"
 if sel_nths and sel_days:
+    # In Method A, the Week and Day are fused (e.g., 1Wed)
+    # We keep these in the day_elements list for standard assembly
     for n in sel_nths:
         for d in sel_days:
-            time_elements.append(f"{n[0]}{d}")
+            day_elements.append(f"{n[0]}{d}")
 
-# Scenario 2: Method B (W-Weeks) - e.g., "W1 Wed" or "W1, W2 Mon, Fri"
+# Scenario 2: Method B (W-Weeks) - e.g., "Tue, Wed | W1, W2, W3"
 elif sel_weeks:
-    if sel_days:
-        # Combine selected Weeks and selected Days
-        # e.g., if W1 and Mon, Wed are picked, result is "W1 Mon, Wed"
-        week_str = ", ".join(sel_weeks)
-        day_str = ", ".join(sel_days)
-        time_elements = [f"{week_str} {day_str}"]
-    else:
-        # Fallback if ONLY weeks are picked
-        time_elements = sel_weeks
+    # Separate the two so they can be placed in different "pipe" sections
+    week_elements = sel_weeks
+    day_elements = sel_days
 
-# Scenario 3: Regular Weekdays ONLY (No Timing Method)
+# Scenario 3: Regular Weekdays ONLY
 elif sel_days:
-    time_elements = sel_days
+    day_elements = sel_days
 
 # --- STRING ASSEMBLY ---
-loc_string = ", ".join(sel_locs)
-time_string = ", ".join(time_elements)
-shift_string = ", ".join(sel_shifts)
+# Define each pipe section clearly
+loc_section = ", ".join(sel_locs)
+day_section = ", ".join(day_elements)
+week_section = ", ".join(week_elements)
+shift_section = ", ".join(sel_shifts)
 
-parts = [p for p in [loc_string, time_string, shift_string] if p.strip()]
-final_code = " | ".join(parts) if parts else "Select options to generate code..."
+# Arrange the sections in your specific order: 
+# Location | Weekdays | Weeks | Shifts
+parts = [p for p in [loc_section, day_section, week_section, shift_section] if p.strip()]
 
-# --- STRING ASSEMBLY ---
-# We use list comprehension to ensure we only join items that actually have content
-loc_string = ", ".join(sel_locs)
-time_string = ", ".join(time_elements)
-shift_string = ", ".join(sel_shifts)
+if parts:
+    final_code = " | ".join(parts)
+else:
+    final_code = "Select options to generate code..."
 
 # Combine only the non-empty parts with the pipe "|" separator
 parts = [p for p in [loc_string, time_string, shift_string] if p.strip()]

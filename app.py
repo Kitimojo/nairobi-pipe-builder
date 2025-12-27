@@ -2,7 +2,7 @@ import streamlit as st
 import calendar
 from datetime import datetime, timedelta
 
-# Page Config
+# Page Setup
 st.set_page_config(page_title="Nairobi Pipe Builder", layout="wide")
 
 # --- DATA ---
@@ -12,34 +12,47 @@ NTHS = ["1st", "2nd", "3rd", "4th", "5th"]
 WEEKS = ["W1", "W2", "W3", "W4", "W5"]
 SHIFTS = ["EM", "M", "A", "E"]
 
-st.title("🇰🇪 Nairobi Pipe Code Builder v5.0")
-st.info("Build your pipe code on the left; see the live calendar impact on the right.")
+# Helper to generate Scheduling Week options for the year
+def get_scheduling_weeks(year):
+    options = []
+    for m_idx in range(1, 13):
+        month_name = calendar.month_name[m_idx]
+        # Find first Monday
+        first_day = datetime(year, m_idx, 1)
+        first_mon = first_day + timedelta(days=(7 - first_day.weekday()) % 7)
+        # Determine how many weeks are in this scheduling month (usually 4 or 5)
+        # We calculate up to the start of the next month's first Monday
+        next_m = m_idx + 1 if m_idx < 12 else 1
+        next_y = year if m_idx < 12 else year + 1
+        next_first_day = datetime(next_y, next_m, 1)
+        next_first_mon = next_first_day + timedelta(days=(7 - next_first_day.weekday()) % 7)
+        
+        num_weeks = (next_first_mon - first_mon).days // 7
+        for w in range(1, num_weeks + 1):
+            options.append(f"{month_name} {year} - W{w}")
+    return options
 
-# --- SIDEBAR / LAYOUT ---
+st.title("🇰🇪 Nairobi Pipe Code Builder v5.1")
+
+# --- LAYOUT ---
 col_left, col_right = st.columns([2, 1])
 
 with col_left:
-    # 1. LOCATIONS (Multi-line layout)
     st.subheader("1. Locations")
     sel_locs = []
-    # Using 4 columns to prevent vertical stretching
-    loc_cols = st.columns(4)
+    loc_cols = st.columns(4) 
     for i, loc in enumerate(LOCATIONS):
         if loc_cols[i % 4].checkbox(loc, key=f"loc_{loc}"):
             sel_locs.append(loc)
 
-    # 2. DAYS
     st.subheader("2. Days of the Week")
     day_cols = st.columns(7)
     sel_days = [day for i, day in enumerate(DAYS) if day_cols[i].checkbox(day)]
 
-    # 3. TIMING (Mutual Exclusivity Logic)
     st.subheader("3. Timing Method")
-    method = st.radio("Choose One Method:", ["Method A: Calendar (1st Wed...)", "Method B: Scheduling (W1...)"], horizontal=True)
+    method = st.radio("Pick ONE:", ["Method A: Calendar Occurrence (1st Wed...)", "Method B: Scheduling Week (W1...)"], horizontal=True)
     
-    sel_nths = []
-    sel_weeks = []
-    
+    sel_nths, sel_weeks = [], []
     if "Calendar" in method:
         nth_cols = st.columns(5)
         sel_nths = [n for i, n in enumerate(NTHS) if nth_cols[i].checkbox(n)]
@@ -47,12 +60,11 @@ with col_left:
         wk_cols = st.columns(5)
         sel_weeks = [w for i, w in enumerate(WEEKS) if wk_cols[i].checkbox(w)]
 
-    # 4. SHIFTS
     st.subheader("4. Shifts")
     shift_cols = st.columns(4)
     sel_shifts = [s for i, s in enumerate(SHIFTS) if shift_cols[i].checkbox(s)]
 
-# --- LOGIC & GENERATION ---
+# --- LOGIC ---
 time_elements = []
 if sel_nths and sel_days:
     for n in sel_nths:
@@ -69,47 +81,53 @@ st.divider()
 st.subheader("Generated Pipe Code")
 st.code(final_code, language="text")
 
-# --- CALENDAR PREVIEW ---
+# --- PREVIEW PANEL ---
 with col_right:
-    st.subheader("📅 Preview Context")
-    target_month = st.selectbox("Select Month", list(calendar.month_name)[1:], index=datetime.now().month-1)
-    target_year = 2026 # As requested for the Nairobi project context
+    st.subheader("📅 Scheduling Context")
+    week_options = get_scheduling_weeks(2026)
+    selected_week_str = st.selectbox("Select Scheduling Week", week_options)
     
-    month_idx = list(calendar.month_name).index(target_month)
+    # Extract month and week number from selection (e.g. "January 2026 - W1")
+    parts = selected_week_str.split(" ")
+    sel_month_name = parts[0]
+    sel_week_num = parts[-1] # e.g., "W1"
     
-    # Calculate Scheduling Week 1 (First Monday)
-    first_day = datetime(target_year, month_idx, 1)
-    first_monday = first_day + timedelta(days=(7 - first_day.weekday()) % 7)
+    month_idx = list(calendar.month_name).index(sel_month_name)
+    first_day = datetime(2026, month_idx, 1)
+    first_mon = first_day + timedelta(days=(7 - first_day.weekday()) % 7)
     
+    # Calculate the specific 7-day range for this Scheduling Week
+    week_int = int(sel_week_num[1:]) - 1
+    start_of_week = first_mon + timedelta(weeks=week_int)
+    end_of_week = start_of_week + timedelta(days=6)
+    
+    st.write(f"**Dates:** {start_of_week.strftime('%b %d')} — {end_of_week.strftime('%b %d')}")
+    st.divider()
+
     matches = []
-    cal = calendar.monthcalendar(target_year, month_idx)
-    
-    for week in cal:
-        for day_num in week:
-            if day_num == 0: continue
-            curr_date = datetime(target_year, month_idx, day_num)
-            day_name = DAYS[curr_date.weekday()]
-            nth_str = f"{(day_num-1)//7 + 1}{NTHS[(day_num-1)//7][1:]}"
-            
-            sched_wk = None
-            if curr_date >= first_monday:
-                sched_wk = f"W{(curr_date - first_monday).days // 7 + 1}"
+    # Check each day in this specific 7-day scheduling window
+    for i in range(7):
+        curr_date = start_of_week + timedelta(days=i)
+        d_name = DAYS[curr_date.weekday()]
+        
+        # Determine Calendar Nth (for Method A matching)
+        nth_val = (curr_date.day - 1) // 7 + 1
+        nth_s = f"{nth_val}{NTHS[nth_val-1][1:]}"
+        
+        # Matching Logic
+        is_match = False
+        if sel_nths and sel_days:
+            if d_name in sel_days and nth_s in sel_nths: is_match = True
+        elif sel_weeks and sel_days:
+            if d_name in sel_days and sel_week_num in sel_weeks: is_match = True
+        elif sel_days and not sel_nths and not sel_weeks:
+            if d_name in sel_days: is_match = True
 
-            # Match Logic
-            match = False
-            if sel_nths and sel_days:
-                if day_name in sel_days and nth_str in sel_nths: match = True
-            elif sel_weeks and sel_days:
-                if day_name in sel_days and sched_wk in sel_weeks: match = True
-            elif sel_days:
-                if day_name in sel_days and not sel_nths and not sel_weeks: match = True
-
-            if match:
-                prefix = f"[{sched_wk}] " if sched_wk else "[Pre-W1] "
-                matches.append(f"{prefix} {target_month[:3]} {day_num} ({day_name})")
+        if is_match:
+            matches.append(f"{curr_date.strftime('%a, %b %d')}")
 
     if matches:
-        st.write(f"Active Dates in {target_month}:")
-        for m in matches: st.write(f"✅ {m}")
+        st.write("Volunteer is **ACTIVE** on:")
+        for m in matches: st.success(m)
     else:
-        st.write("No dates match this logic.")
+        st.write("Volunteer is **NOT ACTIVE** during this scheduling week.")

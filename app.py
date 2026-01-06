@@ -3,10 +3,10 @@ import calendar
 from datetime import datetime, timedelta
 
 # Page Setup
-st.set_page_config(page_title="Nairobi Pipe Builder v6.2", layout="wide")
+st.set_page_config(page_title="Nairobi Pipe Builder v6.3", layout="wide")
 
 # --- DATA ---
-LOCATIONS = ["AGW", "JVJ", "Mbingu", "KEN", "KICC", "Train", "Adams", "Comet", "Sarit", "Nyayo", "Sig"]
+LOCATIONS = ["JVJ", "AGW", "Mbingu", "KEN", "KICC", "Train", "Adams", "Comet", "Sarit", "Nyayo", "Sig"]
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 NTHS = ["1st", "2nd", "3rd", "4th", "5th"]
@@ -51,7 +51,7 @@ def get_scheduling_weeks(year):
 
 
 # --- UI ---
-st.title("Nairobi Pipe Code Builder v6.2")
+st.title("Nairobi Pipe Code Builder v6.3")
 
 col_left, col_right = st.columns([2, 1])
 
@@ -61,18 +61,24 @@ with col_left:
     st.subheader("1. Locations")
     sel_locs = []
     loc_cols = st.columns(4)
-    
+
     sig_selected = st.session_state.get("loc_Sig", False)
-    
+
     for i, loc in enumerate(LOCATIONS):
         key = f"loc_{loc}"
         disabled = sig_selected and loc != "Sig"
         if loc_cols[i % 4].checkbox(loc, key=key, disabled=disabled):
             sel_locs.append(loc)
-    
-    # Show warning if user tries to select Sig + another location
+
+    # If Sig is selected AND another location is selected → warn
     if sig_selected and len(sel_locs) > 1:
         st.warning("Uncheck Sig to select a different location.")
+
+    # Recompute selected locations AFTER exclusivity logic
+    sel_locs = ["Sig"] if sig_selected else [
+        loc for loc in LOCATIONS
+        if st.session_state.get(f"loc_{loc}", False)
+    ]
 
     # --- DAYS ---
     st.subheader("2. Days of the Week")
@@ -131,40 +137,43 @@ with col_left:
 
 
 # --- LOGIC ENGINE ---
-loc_val = ", ".join(sel_locs) if sel_locs else "Any"
-day_val = "Any"
-week_val = "Any"
-shift_val = "Any"
+if not sel_locs and not sel_days and not sel_shifts:
+    final_code = "Select options above to generate code..."
+else:
+    loc_val = ", ".join(sel_locs) if sel_locs else "Any"
+    day_val = "Any"
+    week_val = "Any"
+    shift_val = "Any"
 
-day_elements = []
+    day_elements = []
 
-if "Method A" in method:
-    if sel_days:
-        day_val = ", ".join(sel_days)
-    if sel_weeks:
-        week_val = ", ".join(sel_weeks)
+    if "Method A" in method:
+        if sel_days:
+            day_val = ", ".join(sel_days)
+        if sel_weeks:
+            week_val = ", ".join(sel_weeks)
 
-elif "Method B" in method:
-    if sel_nths and sel_days:
-        for n in sel_nths:
-            for d in sel_days:
-                day_elements.append(f"{n[0]}{d}")
-        day_val = ", ".join(day_elements)
-    elif sel_days:
-        day_val = ", ".join(sel_days)
+    elif "Method B" in method:
+        if sel_nths and sel_days:
+            for n in sel_nths:
+                for d in sel_days:
+                    day_elements.append(f"{n[0]}{d}")
+            day_val = ", ".join(day_elements)
+        elif sel_days:
+            day_val = ", ".join(sel_days)
 
-else:  # Method C
-    if sel_days:
-        day_val = ", ".join(sel_days)
-    if sel_alt:
-        week_val = sel_alt
+    else:  # Method C
+        if sel_days:
+            day_val = ", ".join(sel_days)
+        if sel_alt:
+            week_val = sel_alt
 
-if sel_shifts:
-    shift_val = ", ".join(sel_shifts)
+    if sel_shifts:
+        shift_val = ", ".join(sel_shifts)
 
-# --- STRING ASSEMBLY ---
-final_code = f"Location: {loc_val} | Day: {day_val} | Week: {week_val} | Shift: {shift_val}"
+    final_code = f"Location: {loc_val} | Day: {day_val} | Week: {week_val} | Shift: {shift_val}"
 
+# --- OUTPUT ---
 st.divider()
 st.subheader("Generated Pipe Code")
 st.code(final_code, language="text")

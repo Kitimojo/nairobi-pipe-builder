@@ -3,7 +3,7 @@ import calendar
 from datetime import datetime, timedelta
 
 # Page Setup
-st.set_page_config(page_title="Nairobi Pipe Builder v6.3", layout="wide")
+st.set_page_config(page_title="Nairobi Pipe Builder v2.0", layout="wide")
 
 # --- DATA ---
 LOCATIONS = ["JVJ", "AGW", "Mbingu", "KEN", "KICC", "Train", "Adams", "Comet", "Sarit", "Nyayo", "Sig"]

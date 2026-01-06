@@ -140,10 +140,10 @@ with col_left:
 if not sel_locs and not sel_days and not sel_shifts:
     final_code = "Select options above to generate code..."
 else:
-    loc_val = ", ".join(sel_locs) if sel_locs else "Any"
-    day_val = "Any"
-    week_val = "Any"
-    shift_val = "Any"
+    loc_val = ", ".join(sel_locs) if sel_locs else "Select"
+    day_val = "Select"
+    week_val = "Select"
+    shift_val = "Select"
 
     day_elements = []
 

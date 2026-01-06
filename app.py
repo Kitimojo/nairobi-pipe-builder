@@ -5,6 +5,9 @@ from datetime import datetime, timedelta
 # Page Setup
 st.set_page_config(page_title="Nairobi Pipe Builder v2.0", layout="wide")
 
+# --- FEATURE FLAGS ---
+SHOW_SCHEDULING_CONTEXT = False  # Set to True if you ever want to show the right-hand preview again
+
 # --- DATA ---
 LOCATIONS = ["JVJ", "AGW", "Mbingu", "KEN", "KICC", "Train", "Adams", "Comet", "Sarit", "Nyayo", "Sig"]
 
@@ -115,11 +118,17 @@ with col_left:
         # If "Any" is selected, override everything
         if any_selected:
             sel_weeks = ["Any"]
+
     elif "Method B" in method:
         nth_cols = st.columns(5)
         sel_nths = [n for i, n in enumerate(NTHS) if nth_cols[i].checkbox(n, key=f"nth_{n}")]
+
     else:
-        sel_alt_text = st.selectbox("Select Cycle:", ["None", "Alternating Odd Weeks", "Alternating Even Weeks"], key="alt_choice")
+        sel_alt_text = st.selectbox(
+            "Select Cycle:",
+            ["None", "Alternating Odd Weeks", "Alternating Even Weeks"],
+            key="alt_choice"
+        )
         if sel_alt_text != "None":
             sel_alt = ALTS[sel_alt_text]
 
@@ -201,59 +210,58 @@ st.code(final_code, language="text")
 st.button("Clear All", on_click=clear_all_fields)
 
 
-# --- PREVIEW PANEL ---
-with col_right:
-    st.subheader("📅 Scheduling Context")
-    week_options = get_scheduling_weeks(2026)
-    selected_week_str = st.selectbox("Select Week to Preview", week_options)
+# --- PREVIEW PANEL (HIDDEN VIA FLAG) ---
+if SHOW_SCHEDULING_CONTEXT:
+    with col_right:
+        st.subheader("📅 Scheduling Context")
+        week_options = get_scheduling_weeks(2026)
+        selected_week_str = st.selectbox("Select Week to Preview", week_options)
 
-    p = selected_week_str.split(" ")
-    start_dt = datetime(2026, list(calendar.month_name).index(p[0]), 1)
-    f_mon = start_dt + timedelta(days=(7 - start_dt.weekday()) % 7)
-    curr_start = f_mon + timedelta(weeks=int(p[-1][1:]) - 1)
+        p = selected_week_str.split(" ")
+        start_dt = datetime(2026, list(calendar.month_name).index(p[0]), 1)
+        f_mon = start_dt + timedelta(days=(7 - start_dt.weekday()) % 7)
+        curr_start = f_mon + timedelta(weeks=int(p[-1][1:]) - 1)
 
-    st.write(f"**Dates:** {curr_start.strftime('%b %d')} — {(curr_start + timedelta(days=6)).strftime('%b %d')}")
-    st.divider()
+        st.write(f"**Dates:** {curr_start.strftime('%b %d')} — {(curr_start + timedelta(days=6)).strftime('%b %d')}")
+        st.divider()
 
-    matches = []
-    for i in range(7):
-        curr = curr_start + timedelta(days=i)
-        d_name = DAYS[curr.weekday()]
-        nth_s = f"{(curr.day - 1) // 7 + 1}{NTHS[(curr.day - 1) // 7][1:]}"
-        iso_wk = curr.isocalendar()[1]
+        matches = []
+        for i in range(7):
+            curr = curr_start + timedelta(days=i)
+            d_name = DAYS[curr.weekday()]
+            nth_s = f"{(curr.day - 1) // 7 + 1}{NTHS[(curr.day - 1) // 7][1:]}"
+            iso_wk = curr.isocalendar()[1]
 
-        match = False
+            match = False
 
-        if "Method B" in method and sel_nths and d_name in sel_days:
-            if nth_s in sel_nths:
-                match = True
-
-        elif "Method A" in method:
-            # Must have selected at least one weekday
-            if d_name in sel_days:
-        
-                # "Any" means active on selected weekdays every week
-                if "Any" in sel_weeks:
-                    match = True
-        
-                # Otherwise match specific weeks (W1–W5)
-                elif sel_weeks and p[-1] in sel_weeks:
+            if "Method B" in method and sel_nths and d_name in sel_days:
+                if nth_s in sel_nths:
                     match = True
 
-        elif "Method C" in method and sel_alt and d_name in sel_days:
-            is_odd = iso_wk % 2 != 0
-            if (sel_alt == "Alt1" and is_odd) or (sel_alt == "Alt2" and not is_odd):
-                match = True
+            elif "Method A" in method:
+                # Must have selected at least one weekday
+                if d_name in sel_days:
+                    # "Any" means active on selected weekdays every week
+                    if "Any" in sel_weeks:
+                        match = True
+                    # Otherwise match specific weeks (W1–W5)
+                    elif sel_weeks and p[-1] in sel_weeks:
+                        match = True
 
-        elif sel_days and not (sel_nths or sel_weeks or sel_alt):
-            if d_name in sel_days:
-                match = True
+            elif "Method C" in method and sel_alt and d_name in sel_days:
+                is_odd = iso_wk % 2 != 0
+                if (sel_alt == "Alt1" and is_odd) or (sel_alt == "Alt2" and not is_odd):
+                    match = True
 
-        if match:
-            matches.append(curr.strftime('%a, %b %d'))
+            elif sel_days and not (sel_nths or sel_weeks or sel_alt):
+                if d_name in sel_days:
+                    match = True
 
-    if matches:
-        for m in matches:
-            st.success(m)
-    else:
-        st.write("Volunteer is **NOT ACTIVE** this week.")
+            if match:
+                matches.append(curr.strftime('%a, %b %d'))
+
+        if matches:
+            for m in matches:
+                st.success(m)
+        else:
+            st.write("Volunteer is **NOT ACTIVE** this week.")

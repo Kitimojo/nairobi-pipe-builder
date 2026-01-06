@@ -3,11 +3,10 @@ import calendar
 from datetime import datetime, timedelta
 
 # Page Setup
-st.set_page_config(page_title="Nairobi Pipe Builder v6.1", layout="wide")
+st.set_page_config(page_title="Nairobi Pipe Builder v6.2", layout="wide")
 
 # --- DATA ---
-NORMAL_LOCATIONS = ["Any", "JVJ", "AGW", "Mbingu", "KEN", "KICC", "Train", "Adams", "Comet", "Sarit", "Nyayo"]
-SIG_LOCATION = "Sig"
+LOCATIONS = ["Any", "JVJ", "AGW", "Mbingu", "KEN", "KICC", "Train", "Adams", "Comet", "Sarit", "Nyayo", "Sig"]
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 NTHS = ["1st", "2nd", "3rd", "4th", "5th"]
@@ -24,7 +23,7 @@ ALTS = {"Alternating Odd Weeks": "Alt1", "Alternating Even Weeks": "Alt2"}
 def clear_all_fields():
     keys = list(st.session_state.keys())
     for key in keys:
-        if any(x in key for x in ["loc_", "sig_loc", "day_", "nth_", "wk_", "shift_"]):
+        if any(x in key for x in ["loc_", "day_", "nth_", "wk_", "shift_"]):
             st.session_state[key] = False
         if key == "method_choice":
             st.session_state[key] = "Method A: Scheduling Week (W1...)"
@@ -52,37 +51,37 @@ def get_scheduling_weeks(year):
 
 
 # --- UI ---
-st.title("Nairobi Pipe Code Builder v6.1")
+st.title("Nairobi Pipe Code Builder v6.2")
 
 col_left, col_right = st.columns([2, 1])
 
 with col_left:
 
-    # --- LOCATION SECTION ---
+    # --- LOCATIONS ---
     st.subheader("1. Locations")
-
-    # Normal locations
-    st.markdown("### Normal Locations")
     sel_locs = []
     loc_cols = st.columns(4)
 
-    for i, loc in enumerate(NORMAL_LOCATIONS):
+    # Track whether we need to clean up non-Sig locations
+    cleanup_non_sig = False
+
+    for i, loc in enumerate(LOCATIONS):
         if loc_cols[i % 4].checkbox(loc, key=f"loc_{loc}"):
             sel_locs.append(loc)
 
-    # Sig in its own section
-    st.markdown("### Sig (Exclusive Location)")
-    sig_selected = st.checkbox("Sig", key="loc_Sig")
+    sig_selected = "Sig" in sel_locs
 
-    # Enforce exclusivity
-    if sig_selected:
-        # Clear all normal locations
-        for loc in NORMAL_LOCATIONS:
-            st.session_state[f"loc_{loc}"] = False
+    # If Sig is selected AND other locations are selected → mark for cleanup
+    if sig_selected and len(sel_locs) > 1:
+        cleanup_non_sig = True
+
+    # Perform cleanup AFTER widgets have been created
+    if cleanup_non_sig:
+        for loc in LOCATIONS:
+            if loc != "Sig":
+                st.session_state[f"loc_{loc}"] = False
         sel_locs = ["Sig"]
-    else:
-        # Normal locations only
-        sel_locs = [loc for loc in sel_locs if loc in NORMAL_LOCATIONS]
+        sig_selected = True
 
     # --- DAYS ---
     st.subheader("2. Days of the Week")
@@ -133,8 +132,9 @@ with col_left:
     if any(s in SHIFTS_SIG for s in sel_shifts) and not sig_selected:
         st.warning("Sig shift selected — Sig location has been automatically enabled.")
         st.session_state["loc_Sig"] = True
-        for loc in NORMAL_LOCATIONS:
-            st.session_state[f"loc_{loc}"] = False
+        for loc in LOCATIONS:
+            if loc != "Sig":
+                st.session_state[f"loc_{loc}"] = False
         sel_locs = ["Sig"]
         sig_selected = True
 

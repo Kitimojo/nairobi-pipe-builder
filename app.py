@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="Nairobi Pipe Builder v6.2", layout="wide")
 
 # --- DATA ---
-LOCATIONS = ["Any", "JVJ", "AGW", "Mbingu", "KEN", "KICC", "Train", "Adams", "Comet", "Sarit", "Nyayo", "Sig"]
+LOCATIONS = ["AGW", "JVJ", "Mbingu", "KEN", "KICC", "Train", "Adams", "Comet", "Sarit", "Nyayo", "Sig"]
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 NTHS = ["1st", "2nd", "3rd", "4th", "5th"]

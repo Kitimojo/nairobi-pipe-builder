@@ -179,6 +179,8 @@ else:
             day_val = ", ".join(day_elements)
         elif sel_days:
             day_val = ", ".join(sel_days)
+        # Method B always uses Week: Any
+        week_val = "Any"
 
     else:  # Method C
         if sel_days:

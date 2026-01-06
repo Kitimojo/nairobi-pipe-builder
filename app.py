@@ -61,27 +61,18 @@ with col_left:
     st.subheader("1. Locations")
     sel_locs = []
     loc_cols = st.columns(4)
-
-    # Track whether we need to clean up non-Sig locations
-    cleanup_non_sig = False
-
+    
+    sig_selected = st.session_state.get("loc_Sig", False)
+    
     for i, loc in enumerate(LOCATIONS):
-        if loc_cols[i % 4].checkbox(loc, key=f"loc_{loc}"):
+        key = f"loc_{loc}"
+        disabled = sig_selected and loc != "Sig"
+        if loc_cols[i % 4].checkbox(loc, key=key, disabled=disabled):
             sel_locs.append(loc)
-
-    sig_selected = "Sig" in sel_locs
-
-    # If Sig is selected AND other locations are selected → mark for cleanup
+    
+    # Show warning if user tries to select Sig + another location
     if sig_selected and len(sel_locs) > 1:
-        cleanup_non_sig = True
-
-    # Perform cleanup AFTER widgets have been created
-    if cleanup_non_sig:
-        for loc in LOCATIONS:
-            if loc != "Sig":
-                st.session_state[f"loc_{loc}"] = False
-        sel_locs = ["Sig"]
-        sig_selected = True
+        st.warning("Uncheck Sig to select a different location.")
 
     # --- DAYS ---
     st.subheader("2. Days of the Week")

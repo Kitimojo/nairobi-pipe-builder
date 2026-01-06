@@ -10,7 +10,7 @@ LOCATIONS = ["Any", "JVJ", "AGW", "Mbingu", "KEN", "Sig", "KICC", "Train", "Adam
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 NTHS = ["1st", "2nd", "3rd", "4th", "5th"]
 WEEKS = ["W1", "W2", "W3", "W4", "W5"]
-SHIFTS = ["am1", "am2", "am2", "pm1", "pm2", "pm3"]
+SHIFTS = ["EM", "M", "A", "E"]
 ALTS = {"Alternating Odd Weeks": "Alt1", "Alternating Even Weeks": "Alt2"}
 
 # --- CLEAR ALL LOGIC ---

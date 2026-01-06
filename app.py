@@ -226,13 +226,17 @@ with col_right:
             if nth_s in sel_nths:
                 match = True
 
-        elif "Method A" in method and sel_days:
-            # If "Any" is selected, always active
-            if "Any" in sel_weeks:
-                match = True
-            # Otherwise match specific weeks
-            elif sel_weeks and p[-1] in sel_weeks:
-                match = True
+        elif "Method A" in method:
+            # Must have selected at least one weekday
+            if d_name in sel_days:
+        
+                # "Any" means active on selected weekdays every week
+                if "Any" in sel_weeks:
+                    match = True
+        
+                # Otherwise match specific weeks (W1–W5)
+                elif sel_weeks and p[-1] in sel_weeks:
+                    match = True
 
         elif "Method C" in method and sel_alt and d_name in sel_days:
             is_odd = iso_wk % 2 != 0

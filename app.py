@@ -226,8 +226,12 @@ with col_right:
             if nth_s in sel_nths:
                 match = True
 
-        elif "Method A" in method and sel_weeks and d_name in sel_days:
-            if p[-1] in sel_weeks:
+        elif "Method A" in method and sel_days:
+            # If "Any" is selected, always active
+            if "Any" in sel_weeks:
+                match = True
+            # Otherwise match specific weeks
+            elif sel_weeks and p[-1] in sel_weeks:
                 match = True
 
         elif "Method C" in method and sel_alt and d_name in sel_days:

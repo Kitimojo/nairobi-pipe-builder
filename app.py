@@ -51,7 +51,7 @@ def get_scheduling_weeks(year):
 
 
 # --- UI ---
-st.title("Nairobi Pipe Code Builder v6.3")
+st.title("Nairobi Pipe Code Builder v2.0")
 
 col_left, col_right = st.columns([2, 1])
 
@@ -99,8 +99,22 @@ with col_left:
     sel_nths, sel_weeks, sel_alt = [], [], None
 
     if "Method A" in method:
-        wk_cols = st.columns(5)
-        sel_weeks = [w for i, w in enumerate(WEEKS) if wk_cols[i].checkbox(w, key=f"wk_{w}")]
+        st.markdown("**Select Week(s):**")
+        wk_cols = st.columns(6)
+    
+        # "Any" option
+        any_selected = wk_cols[0].checkbox("Any", key="wk_Any")
+    
+        # Normal week options
+        sel_weeks = []
+        for i, w in enumerate(WEEKS):
+            disabled = any_selected
+            if wk_cols[i + 1].checkbox(w, key=f"wk_{w}", disabled=disabled):
+                sel_weeks.append(w)
+    
+        # If "Any" is selected, override everything
+        if any_selected:
+            sel_weeks = ["Any"]
     elif "Method B" in method:
         nth_cols = st.columns(5)
         sel_nths = [n for i, n in enumerate(NTHS) if nth_cols[i].checkbox(n, key=f"nth_{n}")]
@@ -150,8 +164,12 @@ else:
     if "Method A" in method:
         if sel_days:
             day_val = ", ".join(sel_days)
+    
         if sel_weeks:
-            week_val = ", ".join(sel_weeks)
+            if "Any" in sel_weeks:
+                week_val = "Any"
+            else:
+                week_val = ", ".join(sel_weeks)
 
     elif "Method B" in method:
         if sel_nths and sel_days:

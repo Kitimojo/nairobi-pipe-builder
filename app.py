@@ -65,7 +65,18 @@ with col_left:
         if loc_cols[i % 4].checkbox(loc, key=f"loc_{loc}"):
             sel_locs.append(loc)
 
+    # Detect Sig selection
     sig_selected = "Sig" in sel_locs
+
+    # --- ENFORCE SIG LOCATION RULE ---
+    if sig_selected:
+        # Remove all non-Sig locations
+        for loc in LOCATIONS:
+            if loc != "Sig" and st.session_state.get(f"loc_{loc}", False):
+                st.session_state[f"loc_{loc}"] = False
+
+        # Force sel_locs to only contain Sig
+        sel_locs = ["Sig"]
 
     # --- DAYS ---
     st.subheader("2. Days of the Week")

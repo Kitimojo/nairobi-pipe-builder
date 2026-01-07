@@ -148,27 +148,24 @@ with col_left:
     st.subheader("4. Shifts")
     sel_shifts = []
     
-    def tooltip_checkbox(col, label, key):
-        """Render a checkbox with a tooltip using HTML."""
-        tooltip = SHIFT_HOURS.get(label, "")
-        html = f"""
-            <span title="{tooltip}">
-                <label style="cursor:pointer;">{label}</label>
-            </span>
-        """
-        col.markdown(html, unsafe_allow_html=True)
-        return col.checkbox("", key=key)
-    
     if sig_selected:
         st.info("Sig selected — choose from Sig-specific shifts.")
         shift_cols = st.columns(4)
         for i, s in enumerate(SHIFTS_SIG):
-            if tooltip_checkbox(shift_cols[i], s, f"shift_{s}"):
+            if shift_cols[i].checkbox(
+                s,
+                key=f"shift_{s}",
+                help=SHIFT_HOURS.get(s, "")
+            ):
                 sel_shifts.append(s)
     else:
         shift_cols = st.columns(6)
         for i, s in enumerate(SHIFTS_NORMAL):
-            if tooltip_checkbox(shift_cols[i], s, f"shift_{s}"):
+            if shift_cols[i].checkbox(
+                s,
+                key=f"shift_{s}",
+                help=SHIFT_HOURS.get(s, "")
+            ):
                 sel_shifts.append(s)
 
     # Enforce reverse rule: Sig shifts require Sig location
@@ -180,7 +177,6 @@ with col_left:
                 st.session_state[f"loc_{loc}"] = False
         sel_locs = ["Sig"]
         sig_selected = True
-
 
 # --- LOGIC ENGINE ---
 if not sel_locs and not sel_days and not sel_shifts:

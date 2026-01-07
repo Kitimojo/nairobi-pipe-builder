@@ -19,8 +19,20 @@ WEEKS = ["W1", "W2", "W3", "W4", "W5"]
 SHIFTS_NORMAL = ["am1", "am2", "am3", "pm1", "pm2", "pm3"]
 SHIFTS_SIG = ["Sig1", "Sig2", "Sig3", "Sig4"]
 
-ALTS = {"Alternating Odd Weeks": "Alt1", "Alternating Even Weeks": "Alt2"}
+SHIFT_HOURS = {
+    "am1": "7:00–8:30",
+    "am2": "8:30–11:00",
+    "am3": "11:00–1:00",
+    "pm1": "1:00–3:00",
+    "pm2": "3:00–5:00",
+    "pm3": "5:00–6:30",
+    "Sig1": "10:00–1:00",
+    "Sig2": "1:00–4:00",
+    "Sig3": "4:00–7:00",
+    "Sig4": "7:00–9:00"
+}
 
+ALTS = {"Alternating Odd Weeks": "Alt1", "Alternating Even Weeks": "Alt2"}
 
 # --- CLEAR ALL LOGIC ---
 def clear_all_fields():
@@ -135,17 +147,28 @@ with col_left:
     # --- SHIFTS ---
     st.subheader("4. Shifts")
     sel_shifts = []
-
+    
+    def tooltip_checkbox(col, label, key):
+        """Render a checkbox with a tooltip using HTML."""
+        tooltip = SHIFT_HOURS.get(label, "")
+        html = f"""
+            <span title="{tooltip}">
+                <label style="cursor:pointer;">{label}</label>
+            </span>
+        """
+        col.markdown(html, unsafe_allow_html=True)
+        return col.checkbox("", key=key)
+    
     if sig_selected:
         st.info("Sig selected — choose from Sig-specific shifts.")
         shift_cols = st.columns(4)
         for i, s in enumerate(SHIFTS_SIG):
-            if shift_cols[i].checkbox(s, key=f"shift_{s}"):
+            if tooltip_checkbox(shift_cols[i], s, f"shift_{s}"):
                 sel_shifts.append(s)
     else:
         shift_cols = st.columns(6)
         for i, s in enumerate(SHIFTS_NORMAL):
-            if shift_cols[i].checkbox(s, key=f"shift_{s}"):
+            if tooltip_checkbox(shift_cols[i], s, f"shift_{s}"):
                 sel_shifts.append(s)
 
     # Enforce reverse rule: Sig shifts require Sig location

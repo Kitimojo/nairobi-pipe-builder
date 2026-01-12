@@ -132,8 +132,15 @@ with col_left:
             sel_weeks = ["Any"]
 
     elif "Method B" in method:
-        nth_cols = st.columns(5)
-        sel_nths = [n for i, n in enumerate(NTHS) if nth_cols[i].checkbox(n, key=f"nth_{n}")]
+        # Add a 6th column for "Last"
+        nth_cols = st.columns(6)
+    
+        # Extend NTHS with "Last"
+        NTHS_EXTENDED = NTHS + ["Last"]
+    
+        sel_nths = [
+            n for i, n in enumerate(NTHS_EXTENDED)
+            if nth_cols[i].checkbox(n, key=f"nth_{n}")]
 
     else:
         sel_alt_text = st.selectbox(
@@ -201,14 +208,25 @@ else:
 
     elif "Method B" in method:
         if sel_nths and sel_days:
+            day_elements = []
             for n in sel_nths:
                 for d in sel_days:
-                    day_elements.append(f"{n[0]}{d}")
+                    # For 1st–5th, keep the existing "1W", "2W" style
+                    if n != "Last":
+                        day_elements.append(f"{n[0]}{d}")
+                    else:
+                        # For "Last", DO NOT prefix the weekday
+                        day_elements.append(d)
             day_val = ", ".join(day_elements)
+    
         elif sel_days:
             day_val = ", ".join(sel_days)
-        # Method B always uses Week: Any
-        week_val = "Any"
+    
+        # Week value logic
+        if "Last" in sel_nths:
+            week_val = "Last"
+        else:
+            week_val = "Any"
 
     else:  # Method C
         if sel_days:

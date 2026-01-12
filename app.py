@@ -211,22 +211,19 @@ else:
             day_elements = []
             for n in sel_nths:
                 for d in sel_days:
-                    # For 1st–5th, keep the existing "1W", "2W" style
-                    if n != "Last":
-                        day_elements.append(f"{n[0]}{d}")
+                    if n == "Last":
+                        # Append "Last" to the weekday
+                        day_elements.append(f"Last{d}")
                     else:
-                        # For "Last", DO NOT prefix the weekday
-                        day_elements.append(d)
+                        # Normal nth logic (1st → "1", 2nd → "2", etc.)
+                        day_elements.append(f"{n[0]}{d}")
             day_val = ", ".join(day_elements)
     
         elif sel_days:
             day_val = ", ".join(sel_days)
     
-        # Week value logic
-        if "Last" in sel_nths:
-            week_val = "Last"
-        else:
-            week_val = "Any"
+        # Week is ALWAYS "Any" for Method B
+        week_val = "Any"
 
     else:  # Method C
         if sel_days:

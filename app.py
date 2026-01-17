@@ -76,13 +76,33 @@ with col_left:
 
     # --- LOCATIONS ---
     st.subheader("1. Location (Choose One)")
-    selected_location = st.radio(
-        "Select Location:",
-        LOCATIONS,
-        key="selected_location",
-        horizontal=False
-    )
-
+    
+    loc_row1 = LOCATIONS[:6]   # First 6 locations
+    loc_row2 = LOCATIONS[6:]   # Remaining locations
+    
+    # Initialize default
+    if "selected_location" not in st.session_state:
+        st.session_state["selected_location"] = LOCATIONS[0]
+    
+    # Row 1
+    cols1 = st.columns(len(loc_row1))
+    for i, loc in enumerate(loc_row1):
+        if cols1[i].button(
+            loc,
+            type="primary" if st.session_state["selected_location"] == loc else "secondary"
+        ):
+            st.session_state["selected_location"] = loc
+    
+    # Row 2
+    cols2 = st.columns(len(loc_row2))
+    for i, loc in enumerate(loc_row2):
+        if cols2[i].button(
+            loc,
+            type="primary" if st.session_state["selected_location"] == loc else "secondary"
+        ):
+            st.session_state["selected_location"] = loc
+    
+    selected_location = st.session_state["selected_location"]
     sel_locs = [selected_location]
     sig_selected = (selected_location == "Sig")
 

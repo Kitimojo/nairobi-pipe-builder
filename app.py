@@ -45,7 +45,7 @@ def clear_all_fields():
         if key == "alt_choice":
             st.session_state[key] = "None"
         if key == "selected_location":
-            st.session_state[key] = LOCATIONS[0]
+            st.session_state[key] = None
 
 
 # --- WEEK CALCULATION ---
@@ -82,7 +82,7 @@ with col_left:
     
     # Initialize default
     if "selected_location" not in st.session_state:
-        st.session_state["selected_location"] = LOCATIONS[0]
+        st.session_state["selected_location"] = None
     
     def set_location(loc):
         st.session_state["selected_location"] = loc
@@ -108,7 +108,7 @@ with col_left:
         )
     
     selected_location = st.session_state["selected_location"]
-    sel_locs = [selected_location]
+    sel_locs = [selected_location] if selected_location else []
     sig_selected = (selected_location == "Sig")
 
     # --- DAYS ---

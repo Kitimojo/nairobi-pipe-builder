@@ -74,26 +74,20 @@ with col_left:
 
     # --- LOCATIONS ---
     st.subheader("1. Locations")
-    sel_locs = []
-    loc_cols = st.columns(4)
+    
+    # Using a Radio button to enforce single-selection
+    # This automatically satisfies the "Only one location" requirement
+    selected_loc = st.radio(
+        "Select Location:",
+        LOCATIONS,
+        index=0,
+        horizontal=True,
+        key="loc_radio"
+    )
 
-    sig_selected = st.session_state.get("loc_Sig", False)
-
-    for i, loc in enumerate(LOCATIONS):
-        key = f"loc_{loc}"
-        disabled = sig_selected and loc != "Sig"
-        if loc_cols[i % 4].checkbox(loc, key=key, disabled=disabled):
-            sel_locs.append(loc)
-
-    # If Sig is selected AND another location is selected → warn
-    if sig_selected and len(sel_locs) > 1:
-        st.warning("Uncheck Sig to select a different location.")
-
-    # Recompute selected locations AFTER exclusivity logic
-    sel_locs = ["Sig"] if sig_selected else [
-        loc for loc in LOCATIONS
-        if st.session_state.get(f"loc_{loc}", False)
-    ]
+    # Simplified Sig Check
+    sig_selected = (selected_loc == "Sig")
+    sel_locs = [selected_loc] # List format maintained for downstream logic compatibility
 
     # --- DAYS ---
     st.subheader("2. Days of the Week")

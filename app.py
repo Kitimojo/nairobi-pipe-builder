@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="Nairobi Pipe Builder v2.0", layout="wide")
 
 # --- FEATURE FLAGS ---
-SHOW_SCHEDULING_CONTEXT = False  # Set to True if you ever want to show the right-hand preview again
+SHOW_SCHEDULING_CONTEXT = False  # Set to True if you ever want to show the right-hand preview again
 
 # --- DATA ---
 LOCATIONS = ["JVJ", "AGW", "Mbingu", "KEN", "KICC", "Train", "Adams", "Comet", "Sarit", "Nyayo", "Sig"]
